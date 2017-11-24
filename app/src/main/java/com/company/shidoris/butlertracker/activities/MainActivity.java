@@ -11,10 +11,18 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.company.shidoris.butlertracker.R;
+import com.company.shidoris.butlertracker.model.Request;
+import com.company.shidoris.butlertracker.model.RequestsData;
 import com.company.shidoris.butlertracker.util.PermissionManager;
 import com.company.shidoris.butlertracker.util.PermissionResult;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -40,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
         availableRequests.addView(createRequestView("Hola"));
         availableRequests.addView(createRequestView("Hola1"));
         availableRequests.addView(createRequestView("Hola2"));
+
+        initDatabase();
     }
 
     public void initLocationService(){
@@ -72,6 +82,42 @@ public class MainActivity extends AppCompatActivity {
 
     public void initDatabase(){
         database = FirebaseDatabase.getInstance().getReference();
+
+        ValueEventListener reqListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                System.out.println("Refreshing");
+
+                RequestsData data = dataSnapshot.getValue(RequestsData.class);
+                ArrayList<String> requests = new ArrayList<>();
+                Map<String, Request> map = data.getRequestsdata();
+
+                for (Map.Entry<String, Request> entry : map.entrySet()){
+                    Request req = entry.getValue();
+                    if ( req.getStatus().equals("Deliver") ){
+                        requests.add(req.getId());
+                    }
+                }
+
+                refreshAvailableRequests(requests);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
+
+        database.addValueEventListener(reqListener);
+    }
+
+    public void refreshAvailableRequests(ArrayList<String> reqIds){
+
+        availableRequests.removeAllViews();
+
+        for (String id: reqIds){
+            availableRequests.addView(createRequestView(id));
+        }
     }
 
     public View createRequestView(final String title){
