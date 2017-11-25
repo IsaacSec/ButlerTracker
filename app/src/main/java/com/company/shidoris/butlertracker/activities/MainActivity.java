@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
                 String lat = ""+location.getLatitude();
                 String lon = ""+location.getLongitude();
                 System.out.println("Loc: "+lat+" "+lon);
-                
+
                 Map<String, Request> map = databaseRequests.getRequestsdata();
 
                 for (Map.Entry<String, Request> entry : map.entrySet()){
@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
                     if ( req.getStatus().equals("Accepted")){
                         database.child("requestsdata").child(req.getId()).child("deliverLat").setValue(lat);
-                        database.child("requestsdata").child(req.getId()).child("deliverLon").setValue(lon);
+                        database.child("requestsdata").child(req.getId()).child("deliverLong").setValue(lon);
                     }
                 }
             }
