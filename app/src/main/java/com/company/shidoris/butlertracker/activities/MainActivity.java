@@ -37,6 +37,10 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.available_requests) LinearLayout availableRequests;
     @BindView(R.id.accepted_requests)  LinearLayout acceptedRequests;
 
+    private ArrayList<Request> acceptedRequestList;
+
+    private RequestsData databaseRequests;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,10 +49,9 @@ public class MainActivity extends AppCompatActivity {
 
         initLocationService();
 
-        availableRequests.addView(createRequestView("Hola"));
-        availableRequests.addView(createRequestView("Hola1"));
-        availableRequests.addView(createRequestView("Hola2"));
+        availableRequests.addView(createAvailableRequestView("Hola"));
 
+        acceptedRequestList = new ArrayList<>();
         initDatabase();
     }
 
@@ -58,7 +61,18 @@ public class MainActivity extends AppCompatActivity {
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                System.out.println("Loc: "+location.getLongitude());
+                //System.out.println("Loc: "+location.getLongitude());
+                Map<String, Request> map = databaseRequests.getRequestsdata();
+
+                for (Map.Entry<String, Request> entry : map.entrySet()){
+                    Request req = entry.getValue();
+
+                    if ( req.getStatus().equals("Accepted")){
+                        //req.setDeliverLat(""+location.getLatitude());
+                        //req.setDeliverLong(""+location.getLongitude());
+
+                    }
+                }
             }
 
             @Override
@@ -89,17 +103,23 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("Refreshing");
 
                 RequestsData data = dataSnapshot.getValue(RequestsData.class);
-                ArrayList<String> requests = new ArrayList<>();
+                databaseRequests = data;
+                ArrayList<String> avaRequests = new ArrayList<>();
+                ArrayList<String> accRequests = new ArrayList<>();
                 Map<String, Request> map = data.getRequestsdata();
 
                 for (Map.Entry<String, Request> entry : map.entrySet()){
                     Request req = entry.getValue();
                     if ( req.getStatus().equals("Deliver") ){
-                        requests.add(req.getId());
+                        avaRequests.add(req.getId());
+                    }
+                    if ( req.getStatus().equals("Accepted")){
+                        accRequests.add(req.getId());
                     }
                 }
 
-                refreshAvailableRequests(requests);
+                refreshAvailableRequests(avaRequests);
+                refreshAcceptedRequests(accRequests);
             }
 
             @Override
@@ -112,15 +132,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void refreshAvailableRequests(ArrayList<String> reqIds){
-
         availableRequests.removeAllViews();
 
         for (String id: reqIds){
-            availableRequests.addView(createRequestView(id));
+            availableRequests.addView(createAvailableRequestView(id));
         }
     }
 
-    public View createRequestView(final String title){
+    public void refreshAcceptedRequests(ArrayList<String> reqIds){
+        acceptedRequests.removeAllViews();
+
+        for (String id: reqIds) {
+            acceptedRequests.addView(createAcceptedRequestView(id));
+        }
+    }
+
+    public View createAvailableRequestView(final String title){
         View view = getLayoutInflater().inflate(R.layout.request_view, null);
         TextView tv = view.findViewById(R.id.request_title);
         tv.setText(title);
@@ -128,7 +155,22 @@ public class MainActivity extends AppCompatActivity {
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Accept request
+                database.child("requestsdata").child(title).child("status").setValue("Accepted");
+            }
+        });
+
+        return view;
+    }
+
+    public View createAcceptedRequestView(final String title){
+        View view = getLayoutInflater().inflate(R.layout.request_view, null);
+        TextView tv = view.findViewById(R.id.request_title);
+        tv.setText(title);
+
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                database.child("requestsdata").child(title).child("status").setValue("Deliver");
             }
         });
 
