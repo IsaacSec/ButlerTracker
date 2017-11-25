@@ -61,16 +61,18 @@ public class MainActivity extends AppCompatActivity {
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                //System.out.println("Loc: "+location.getLongitude());
+                String lat = ""+location.getLatitude();
+                String lon = ""+location.getLongitude();
+                System.out.println("Loc: "+lat+" "+lon);
+                
                 Map<String, Request> map = databaseRequests.getRequestsdata();
 
                 for (Map.Entry<String, Request> entry : map.entrySet()){
                     Request req = entry.getValue();
 
                     if ( req.getStatus().equals("Accepted")){
-                        //req.setDeliverLat(""+location.getLatitude());
-                        //req.setDeliverLong(""+location.getLongitude());
-
+                        database.child("requestsdata").child(req.getId()).child("deliverLat").setValue(lat);
+                        database.child("requestsdata").child(req.getId()).child("deliverLon").setValue(lon);
                     }
                 }
             }
